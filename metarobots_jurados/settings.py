@@ -56,7 +56,9 @@ ROOT_URLCONF = 'metarobots_jurados.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates',  # Incluir templates del proyecto principal
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -117,6 +119,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# En desarrollo, Django sirve archivos estáticos automáticamente
+# Para producción, configura STATIC_ROOT y STATICFILES_DIRS
+STATICFILES_DIRS = [
+    # Aquí puedes agregar directorios adicionales si es necesario
+]
+
+# Necesario para servir archivos estáticos desde cualquier host
+STATIC_ROOT = None  # Django usa el sistema de archivos estáticos integrado en desarrollo
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

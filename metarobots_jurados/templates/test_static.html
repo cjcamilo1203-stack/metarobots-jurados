@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Archivos Estáticos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .test-container { background: white; border-radius: 15px; padding: 30px; margin: 50px auto; max-width: 800px; }
+        .status-good { color: #28a745; }
+        .status-bad { color: #dc3545; }
+        .test-url { word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container shadow">
+            <h1 class="text-center mb-4">
+                <i class="bi bi-check-circle text-success"></i> Prueba de Archivos Estáticos
+            </h1>
+
+            <div class="alert alert-info">
+                <strong>🌐 Estado Actual:</strong> Servidor configurado en <code>0.0.0.0:8000</code>
+            </div>
+
+            <h3>📋 URLs de Prueba:</h3>
+            <div class="mb-3">
+                <strong>✅ Localhost (debe funcionar):</strong>
+                <div class="test-url">http://127.0.0.1:8000/</div>
+            </div>
+
+            <div class="mb-3">
+                <strong>🎯 IP Externa (prueba esto):</strong>
+                <div class="test-url">http://192.168.184.125:8000/</div>
+            </div>
+
+            <h3>🔍 Pruebas de Archivos Estáticos:</h3>
+            <div class="list-group">
+                <a href="http://127.0.0.1:8000/static/bootstrap/css/bootstrap.min.css" target="_blank" class="list-group-item list-group-item-action">
+                    🧪 Bootstrap CSS (Localhost)
+                </a>
+                <a href="http://192.168.184.125:8000/static/bootstrap/css/bootstrap.min.css" target="_blank" class="list-group-item list-group-item-action">
+                    🧪 Bootstrap CSS (IP Externa)
+                </a>
+                <a href="http://127.0.0.1:8000/static/bootstrap-icons/font/bootstrap-icons.css" target="_blank" class="list-group-item list-group-item-action">
+                    🧪 Bootstrap Icons (Localhost)
+                </a>
+                <a href="http://192.168.184.125:8000/static/bootstrap-icons/font/bootstrap-icons.css" target="_blank" class="list-group-item list-group-item-action">
+                    🧪 Bootstrap Icons (IP Externa)
+                </a>
+            </div>
+
+            <div class="mt-4 p-3 bg-light rounded">
+                <h5>🛠️ Instrucciones:</h5>
+                <ol>
+                    <li><strong>Reinicia tu navegador</strong> (Cierra todas las pestañas)</li>
+                    <li><strong>Limpia la caché completamente</strong> (Ctrl+Shift+Supr)</li>
+                    <li><strong>Prueba la IP externa:</strong> http://192.168.184.125:8000</li>
+                    <li><strong>Si no funciona,</strong> prueba en otro navegador (Firefox, Edge)</li>
+                </ol>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="/" class="btn btn-primary btn-lg">
+                    <i class="bi bi-house"></i> Ir al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.js"></script>
+</body>
+</html>
