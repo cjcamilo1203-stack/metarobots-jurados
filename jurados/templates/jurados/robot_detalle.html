@@ -1,0 +1,358 @@
+{% extends 'jurados/base.html' %} {% block title %}{{ robot.nombre }} -
+MetaRobots{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a href="{% url 'jurados:home' %}">Inicio</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url 'jurados:categoria_detalle' robot.categoria.nombre %}"
+            >{{ robot.categoria.get_nombre_display }}</a
+          >
+        </li>
+        <li class="breadcrumb-item active">{{ robot.nombre }}</li>
+      </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1><i class="bi bi-robot"></i> {{ robot.nombre }}</h1>
+      <div>
+        {% if sesion_activa %}
+        <button
+          type="button"
+          class="btn btn-danger"
+          onclick="finalizarSesion()"
+        >
+          <i class="bi bi-stop-circle waiting-indicator"></i> Detener Registro
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-success" onclick="iniciarSesion()">
+          <i class="bi bi-play-circle"></i> Registrar Tiempo
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-info-circle"></i> Información del Robot</h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <strong>Categoría:</strong> {{ robot.categoria.get_nombre_display }}
+        </p>
+        <p><strong>Autor Principal:</strong> {{ robot.autor_principal }}</p>
+        {% if robot.autor_secundario %}
+        <p><strong>Autor Secundario:</strong> {{ robot.autor_secundario }}</p>
+        {% endif %}
+        <p>
+          <strong>Fecha de Registro:</strong> {{
+          robot.fecha_registro|date:"d/m/Y H:i" }}
+        </p>
+        <p>
+          <strong>Mejor Tiempo:</strong>
+          {% if robot.mejor_tiempo %}
+          <span class="badge bg-success fs-6">{{ robot.mejor_tiempo }}s</span>
+          {% else %}
+          <span class="badge bg-secondary">Sin tiempos registrados</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-stopwatch"></i> Estado de Registro</h5>
+      </div>
+      <div class="card-body text-center">
+        {% if sesion_activa %}
+        <div class="alert alert-warning waiting-indicator">
+          <i class="bi bi-hourglass-split fs-1"></i>
+          <h4>Esperando Tiempo...</h4>
+          <p>El sistema está listo para recibir el tiempo desde la ESP32</p>
+          <small
+            >Sesión iniciada: {{ sesion_activa.fecha_inicio|date:"H:i:s"
+            }}</small
+          >
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">
+          <i class="bi bi-pause-circle fs-1"></i>
+          <h4>Sin Sesión Activa</h4>
+          <p>Presiona "Registrar Tiempo" para iniciar una nueva sesión</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h5><i class="bi bi-list-ol"></i> Historial de Tiempos</h5>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#tiempoManualModal"
+        >
+          <i class="bi bi-plus-circle"></i> Agregar Tiempo Manual
+        </button>
+      </div>
+      <div class="card-body">
+        {% if tiempos %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Tiempo</th>
+                <th>Fecha/Hora</th>
+                <th>Método</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tiempo in tiempos %}
+              <tr {% if not tiempo.valido %}class="table-warning" {% endif %}>
+                <td>
+                  <strong class="timer-display" style="font-size: 1.2rem"
+                    >{{ tiempo.tiempo }}s</strong
+                  >
+                </td>
+                <td>{{ tiempo.fecha_registro|date:"d/m/Y H:i:s" }}</td>
+                <td>
+                  {% if tiempo.metodo_registro == 'esp32' %}
+                  <span class="badge bg-primary">ESP32</span>
+                  {% else %}
+                  <span class="badge bg-info">Manual</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if tiempo.valido %}
+                  <span class="badge bg-success">Válido</span>
+                  {% else %}
+                  <span class="badge bg-warning">Inválido</span>
+                  {% endif %}
+                </td>
+                <td>{{ tiempo.observaciones|default:"-" }}</td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button
+                      type="button"
+                      class="btn btn-outline-warning btn-sm"
+                      onclick="editarTiempo({{ tiempo.id }}, {{ tiempo.tiempo }}, '{{ tiempo.observaciones|default:'' }}', {{ tiempo.valido|yesno:'true,false' }})"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      onclick="eliminarTiempo({{ tiempo.id }})"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center">
+          <i class="bi bi-clock-history fs-1 text-muted"></i>
+          <p class="text-muted mt-2">
+            No hay tiempos registrados para este robot
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para tiempo manual -->
+<div class="modal fade" id="tiempoManualModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tiempoModalTitle">Agregar Tiempo Manual</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form
+        id="tiempoForm"
+        method="post"
+        action="{% url 'jurados:agregar_tiempo_manual' robot.id %}"
+      >
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" id="tiempoId" name="tiempo_id" />
+          <div class="mb-3">
+            <label for="tiempo" class="form-label">Tiempo (segundos) *</label>
+            <input
+              type="number"
+              class="form-control"
+              id="tiempo"
+              name="tiempo"
+              step="0.00001"
+              min="0"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="observaciones" class="form-label">Observaciones</label>
+            <textarea
+              class="form-control"
+              id="observaciones"
+              name="observaciones"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="valido"
+              name="valido"
+              checked
+            />
+            <label class="form-check-label" for="valido"> Tiempo válido </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">Guardar Tiempo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para eliminar tiempo -->
+<div class="modal fade" id="deleteTiempoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Eliminación</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar este tiempo registrado?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <form id="deleteTiempoForm" method="post" style="display: inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function iniciarSesion() {
+      fetch('{% url "jurados:iniciar_sesion" robot.id %}', {
+          method: 'POST',
+          headers: {
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+              'Content-Type': 'application/json',
+          },
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              location.reload();
+          } else {
+              alert('Error al iniciar sesión: ' + data.error);
+          }
+      });
+  }
+
+  function finalizarSesion() {
+      fetch('{% url "jurados:finalizar_sesion" robot.id %}', {
+          method: 'POST',
+          headers: {
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+              'Content-Type': 'application/json',
+          },
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              location.reload();
+          } else {
+              alert('Error al finalizar sesión: ' + data.error);
+          }
+      });
+  }
+
+  function editarTiempo(id, tiempo, observaciones, valido) {
+      document.getElementById('tiempoModalTitle').textContent = 'Editar Tiempo';
+      document.getElementById('tiempoId').value = id;
+      document.getElementById('tiempo').value = tiempo;
+      document.getElementById('observaciones').value = observaciones;
+      document.getElementById('valido').checked = valido;
+      document.getElementById('tiempoForm').action = '{% url "jurados:editar_tiempo" robot.id 0 %}'.replace('0', id);
+      new bootstrap.Modal(document.getElementById('tiempoManualModal')).show();
+  }
+
+  function eliminarTiempo(id) {
+      document.getElementById('deleteTiempoForm').action = '{% url "jurados:eliminar_tiempo" robot.id 0 %}'.replace('0', id);
+      new bootstrap.Modal(document.getElementById('deleteTiempoModal')).show();
+  }
+
+  // Reset modal when closed
+  document.getElementById('tiempoManualModal').addEventListener('hidden.bs.modal', function () {
+      document.getElementById('tiempoModalTitle').textContent = 'Agregar Tiempo Manual';
+      document.getElementById('tiempoForm').reset();
+      document.getElementById('tiempoId').value = '';
+      document.getElementById('tiempoForm').action = '{% url "jurados:agregar_tiempo_manual" robot.id %}';
+      document.getElementById('valido').checked = true;
+  });
+
+  // Auto-refresh page every 5 seconds if session is active
+  {% if sesion_activa %}
+  setInterval(function() {
+      // Check if there are new times
+      fetch('{% url "jurados:check_new_times" robot.id %}')
+      .then(response => response.json())
+      .then(data => {
+          if (data.has_new_times) {
+              location.reload();
+          }
+      });
+  }, 5000);
+  {% endif %}
+</script>
+{% endblock %}
