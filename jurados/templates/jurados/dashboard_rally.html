@@ -1,0 +1,108 @@
+{% extends 'jurados/base.html' %}
+{% block title %}Dashboard Rally{% endblock %}
+{% block content %}
+<style>
+  .tv-bg { background: radial-gradient(ellipse at top left, #6610f222, transparent 40%), radial-gradient(ellipse at bottom right, #20c99722, transparent 40%); border-radius: 12px; }
+  .tv-section-title { font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
+  .tv-bracket { display:flex; gap:18px; padding:16px; align-items:flex-start; min-height: 50vh; }
+  .tv-col { min-width: 320px; }
+  .tv-stage { background:#1b1f2a; color:#eaf4ff; font-weight:600; border-radius:8px; padding:6px 10px; text-transform:uppercase; letter-spacing:.5px; display:inline-flex; align-items:center; gap:.5rem; box-shadow: inset 0 -2px 0 rgba(255,255,255,.05); }
+  .tv-card { background:#0b2236; color:#eaf4ff; border-radius:12px; padding:12px 14px; margin:12px 0; box-shadow:0 10px 22px rgba(0,0,0,.28); }
+  .tv-match { border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:8px; margin:10px 0; background:#0f1520; }
+  .tv-team { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:8px 10px; border-radius:8px; }
+  .tv-team + .tv-team { margin-top:6px; }
+  .tv-team.win { background:#0f5132; color:#d1e7dd; }
+  .tv-team.pending { background:#14283c; color:#cfe2ff; }
+  .tv-final { min-width: 360px; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="tv-section-title"><i class="bi bi-speedometer2"></i> Dashboard Rally</div>
+  {% if torneo %}
+  <div class="text-muted">{{ torneo.nombre }}</div>
+  {% endif %}
+</div>
+
+{% if not torneo %}
+  <div class="alert alert-info">No hay un torneo activo de Rally. Crea una eliminatoria desde "Tiempos Rally".</div>
+{% else %}
+  <div class="mb-2"><span class="badge bg-warning text-dark">Llaves iniciales (triadas)</span></div>
+  <div class="tv-bg mb-4">
+    <div class="row g-3 p-3">
+      {% for t in triads %}
+      <div class="col-lg-6">
+        <div class="tv-card">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-bold">Triada {{ forloop.counter }}</div>
+            {% if t.winner %}<span class="badge bg-success">{{ t.winner.nombre }}</span>{% else %}<span class="badge bg-secondary">Pendiente</span>{% endif %}
+          </div>
+          <div class="tv-match">
+            <div class="tv-team {% if t.winner and t.winner.id == t.a.id %}win{% else %}pending{% endif %}"><span>{{ t.a.nombre }}</span></div>
+            <div class="tv-team {% if t.winner and t.winner.id == t.b.id %}win{% else %}pending{% endif %}"><span>{{ t.b.nombre }}</span></div>
+            {% if t.c %}<div class="tv-team {% if t.winner and t.winner.id == t.c.id %}win{% else %}pending{% endif %}"><span>{{ t.c.nombre }}</span></div>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="mb-2"><span class="badge bg-info">Eliminatorias</span></div>
+  {% if rounds %}
+  <div class="tv-bg scroll-x">
+    <div class="tv-bracket">
+      {% for r in rounds %}
+      <div class="tv-col {% if forloop.revcounter == 1 %}tv-final{% endif %}">
+        <div class="tv-stage">
+          {% if forloop.revcounter == 1 %}<i class="bi bi-trophy-fill"></i> Final
+          {% elif forloop.revcounter == 2 %}<i class="bi bi-diagram-3"></i> Semifinal
+          {% else %}<i class="bi bi-diagram-2"></i> Ronda{% endif %}
+        </div>
+        <div class="tv-card">
+          {% for m in r.matches.all %}
+            <div class="tv-match">
+              <div class="tv-team {% if m.winner and m.a and m.winner.id == m.a.id %}win{% else %}pending{% endif %}"><span>{{ m.a.nombre|default:"TBD" }}</span></div>
+              <div class="tv-team {% if m.winner and m.b and m.winner.id == m.b.id %}win{% else %}pending{% endif %}"><span>{{ m.b.nombre|default:"TBD" }}</span></div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="tv-col" style="min-width:260px">
+        <div class="tv-stage"><i class="bi bi-award-fill"></i> Campeón</div>
+        <div class="tv-card d-flex align-items-center justify-content-center" style="height:140px;">
+          {% with last=rounds|last %}
+            {% if last and last.matches.first.winner %}
+              <div class="text-center">
+                <div class="display-6"><i class="bi bi-trophy-fill text-warning"></i></div>
+                <div class="fw-bold">{{ last.matches.first.winner.nombre }}</div>
+              </div>
+            {% else %}
+              <span class="text-muted">Aún sin definir</span>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+    <div class="alert alert-info">Aún no hay eliminatorias (define los ganadores de las llaves iniciales).</div>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-refresh cada 10s para reflejar cambios hechos desde otros dispositivos
+  (function(){
+    var REFRESH_MS = 10000; // 10 segundos
+    setInterval(function(){
+      // Evita cache del navegador
+      fetch(window.location.href, { cache: 'no-store' })
+        .then(function(){ window.location.reload(); });
+    }, REFRESH_MS);
+  })();
+  </script>
+{% endblock %}
+
+

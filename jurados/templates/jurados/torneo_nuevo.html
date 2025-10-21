@@ -1,0 +1,40 @@
+{% extends 'jurados/base.html' %}
+{% block title %}Nuevo Torneo{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <h1><i class="bi bi-plus-circle"></i> Crear nuevo torneo</h1>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="card">
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            <input type="text" class="form-control" value="{{ categoria }}" disabled />
+          </div>
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre del torneo</label>
+            <input id="nombre" name="nombre" type="text" class="form-control" value="{{ nombre|default:'Torneo' }}" />
+          </div>
+          <div class="mb-3">
+            <label for="participantes" class="form-label">Participantes (uno por línea)</label>
+            <textarea id="participantes" name="participantes" rows="10" class="form-control" placeholder="Equipo/Robot 1&#10;Equipo/Robot 2&#10;...">{{ participantes_text }}</textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'jurados:home' %}" class="btn btn-secondary">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Crear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+
+
+

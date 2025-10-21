@@ -1,0 +1,162 @@
+{% extends 'jurados/base.html' %}
+{% block title %}{{ torneo.nombre }} - {{ torneo.get_categoria_display }}{% endblock %}
+{% block content %}
+<style>
+  .bracket-wrapper { overflow-x: auto; padding-bottom: 8px; }
+  .bracket { display: flex; gap: 16px; min-height: 60vh; }
+  .round-col { min-width: 420px; }
+  .round-head { display:flex; justify-content:space-between; align-items:center; padding:.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,.1); position: sticky; top: 0; backdrop-filter: blur(2px); }
+  .match-card { border: 1px solid #2b3035; border-radius: 10px; padding: .75rem .9rem; margin: .75rem 0; background: #0f1520; color: #e9ecef; }
+  .team { display:flex; justify-content:space-between; align-items:center; padding:.35rem .45rem; border-radius:8px; gap:.5rem; }
+  .team.winner { background: #0f5132; color: #d1e7dd; }
+  .team.pending { background: #1b2633; color:#cfe2ff; }
+  .vs { font-size: .8rem; opacity: .7; padding: 0 .25rem; }
+  .legend { font-size: .9rem; }
+  .seed { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:.75rem; font-weight:700; background:#0dcaf0; color:#052c65; }
+  /* Estado por fase */
+  .round-octavos .round-head { background: linear-gradient(90deg,#0d6efd22,#0d6efd11); }
+  .round-cuartos .round-head { background: linear-gradient(90deg,#6f42c122,#6f42c111); }
+  .round-semis .round-head { background: linear-gradient(90deg,#fd7e1422,#fd7e1411); }
+  .round-final .round-head { background: linear-gradient(90deg,#19875422,#19875411); }
+  .round-16 .round-head { background: linear-gradient(90deg,#20c99722,#20c99711); }
+
+  /* Indicadores y animaciones */
+  .status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-left:.5rem; }
+  .status-pending { background:#ffc107; }
+  .status-done { background:#198754; }
+  .match-card { transition: transform .15s ease, box-shadow .15s ease; }
+  .match-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+  @keyframes pulse-win { 0%{box-shadow:0 0 0 0 rgba(25,135,84,.7)} 70%{box-shadow:0 0 0 10px rgba(25,135,84,0)} 100%{box-shadow:0 0 0 0 rgba(25,135,84,0)} }
+  .team.winner { animation: pulse-win 1.2s ease; }
+  .round-nav { gap:.5rem; }
+</style>
+
+<div class="row mb-3">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <div>
+      <h1><i class="bi bi-trophy"></i> {{ torneo.nombre }} ({{ torneo.get_categoria_display }})</h1>
+      <p class="text-muted mb-0">Participantes: {{ participants|length }}</p>
+      <div class="legend text-muted"><small><span class="badge bg-success">Ganador</span> <span class="ms-2 badge bg-info">BYE</span></small></div>
+    </div>
+    <div class="d-flex round-nav">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="roundPrev"><i class="bi bi-arrow-left"></i></button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="roundNext"><i class="bi bi-arrow-right"></i></button>
+      {% if torneo.categoria == 'futbol' %}
+      <a class="btn btn-outline-primary" href="{% url 'jurados:futbol_grupos' torneo.id %}"><i class="bi bi-people"></i> Ver grupos</a>
+      {% endif %}
+      <a class="btn btn-primary" href="{% url 'jurados:torneo_detalle' torneo.id %}"><i class="bi bi-braces"></i> Ver llaves</a>
+      <form method="post" action="{% url 'jurados:torneo_reiniciar' torneo.categoria %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="password" name="pin" class="form-control form-control-sm d-inline-block me-2" placeholder="PIN (0000)" style="width:120px" required>
+        <button class="btn btn-outline-danger">
+          <i class="bi bi-arrow-repeat"></i> Reiniciar torneo
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if rounds %}
+<div class="bracket-wrapper">
+  <div class="bracket">
+    {% for round in rounds %}
+      {% with rn=round.nombre|lower %}
+      <div class="round-col card {% if 'final' in rn %}round-final{% elif 'semi' in rn %}round-semis{% elif 'cuartos' in rn %}round-cuartos{% elif 'octavos' in rn %}round-octavos{% elif 'dieciseis' in rn %}round-16{% endif %}">
+        <div class="round-head">
+          <div class="d-flex align-items-center gap-2">
+            {% if 'final' in rn %}<i class="bi bi-trophy-fill text-success"></i>{% elif 'semi' in rn %}<i class="bi bi-diagram-3 text-warning"></i>{% elif 'cuartos' in rn %}<i class="bi bi-diagram-2 text-info"></i>{% elif 'octavos' in rn %}<i class="bi bi-diagram-2-fill text-primary"></i>{% else %}<i class="bi bi-diagram-3 text-secondary"></i>{% endif %}
+            <strong>{{ round.nombre }}</strong>
+          </div>
+          <div>
+            <span class="badge {% if round.completed %}bg-success{% else %}bg-secondary{% endif %}">{% if round.completed %}Completada{% else %}En progreso{% endif %}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          {% for match in round.matches.all %}
+            <div class="match-card">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="team {% if match.winner and match.a and match.winner.id == match.a.id %}winner{% elif not match.winner %}pending{% endif %}">
+                  <span class="seed" title="Semilla/ID">{{ match.a.id|default:"" }}</span>
+                  <span title="Equipo A">{{ match.a.nombre|default:"TBD" }}</span>
+                  {% if match.is_bye %}<span class="badge bg-info ms-2">BYE</span>{% endif %}
+                </div>
+                <span class="vs">vs</span>
+                <div class="team {% if match.winner and match.b and match.winner.id == match.b.id %}winner{% elif not match.winner %}pending{% endif %}">
+                  <span class="seed" title="Semilla/ID">{{ match.b.id|default:"" }}</span>
+                  <span title="Equipo B">{{ match.b.nombre|default:"TBD" }}</span>
+                </div>
+              </div>
+              <div class="mt-1">
+                {% if match.winner %}
+                  <small class="text-success"><i class="bi bi-check-circle"></i> Ganador registrado</small>
+                  <span class="status-dot status-done" title="Finalizado"></span>
+                {% else %}
+                  <small class="text-warning"><i class="bi bi-hourglass-split"></i> Pendiente</small>
+                  <span class="status-dot status-pending" title="Pendiente"></span>
+                {% endif %}
+              </div>
+              {% if not match.is_bye %}
+              <div class="mt-2 d-flex align-items-center gap-2">
+                <form method="post" action="{% url 'jurados:torneo_guardar_ganador' torneo.id match.id %}" class="d-flex align-items-center gap-2">
+                  {% csrf_token %}
+                  <select name="winner_participant_id" class="form-select form-select-sm" style="width: auto;">
+                    <option value="" {% if not match.winner %}selected{% endif %}>Seleccionar ganador</option>
+                    {% if match.a %}<option value="{{ match.a.id }}" {% if match.winner and match.winner.id == match.a.id %}selected{% endif %}>{{ match.a.nombre }}</option>{% endif %}
+                    {% if match.b %}<option value="{{ match.b.id }}" {% if match.winner and match.winner.id == match.b.id %}selected{% endif %}>{{ match.b.nombre }}</option>{% endif %}
+                  </select>
+                  <button class="btn btn-success btn-sm">Guardar</button>
+                </form>
+                {% if not match.winner %}
+                <div class="btn-group">
+                  {% if match.a %}
+                  <form method="post" action="{% url 'jurados:torneo_marcar_ganador' torneo.id match.id match.a.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success btn-sm">Gana {{ match.a.nombre }}</button>
+                  </form>
+                  {% endif %}
+                  {% if match.b %}
+                  <form method="post" action="{% url 'jurados:torneo_marcar_ganador' torneo.id match.id match.b.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success btn-sm">Gana {{ match.b.nombre }}</button>
+                  </form>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+  <div class="alert alert-info">Aún no hay rondas creadas.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function(){
+    const wrapper = document.querySelector('.bracket-wrapper');
+    const prev = document.getElementById('roundPrev');
+    const next = document.getElementById('roundNext');
+    if (wrapper && prev && next){
+      prev.addEventListener('click', ()=> wrapper.scrollBy({left: -360, behavior:'smooth'}));
+      next.addEventListener('click', ()=> wrapper.scrollBy({left: 360, behavior:'smooth'}));
+    }
+    // Habilitar tooltips de Bootstrap si están disponibles
+    if (window.bootstrap){
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+      tooltipTriggerList.forEach(function (el) {
+        new bootstrap.Tooltip(el);
+      });
+    }
+  })();
+  </script>
+{% endblock %}
+
+

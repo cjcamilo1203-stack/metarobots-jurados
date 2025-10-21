@@ -1,0 +1,68 @@
+{% extends 'jurados/base.html' %}
+{% block title %}Rally - Llaves Top 12{% endblock %}
+{% block content %}
+<style>
+  .bracket-wrapper { overflow-x: auto; padding-bottom: 8px; }
+  .bracket { display: flex; gap: 16px; }
+  .round-col { min-width: 420px; }
+  .match-card { border: 1px solid #2b3035; border-radius: 10px; padding: .75rem .9rem; margin: .75rem 0; background: #0f1520; color: #e9ecef; }
+  .team { display:flex; justify-content:space-between; align-items:center; padding:.35rem .45rem; border-radius:8px; gap:.5rem; }
+  .team.pending { background: #1b2633; color:#cfe2ff; }
+  .vs { font-size: .8rem; opacity: .7; padding: 0 .25rem; }
+  .badge-bye { background:#0dcaf0; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="mb-0"><i class="bi bi-diagram-2"></i> Rally - Llaves (Top 12)</h1>
+  <a class="btn btn-outline-secondary" href="{% url 'jurados:tiempos_rally' %}"><i class="bi bi-arrow-left"></i> Volver a Tiempos</a>
+  </div>
+<p class="text-muted">Participantes seleccionados: {{ num_participants }} (al azar entre los 12 mejores tiempos)</p>
+<form method="post" class="mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="reset" value="1" />
+  <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-repeat"></i> Reiniciar llaves</button>
+  <small class="text-muted ms-2">(vuelve a sortear el Top 12)</small>
+  </form>
+
+<div class="bracket-wrapper">
+  <div class="bracket">
+    {% for round in rounds %}
+    <div class="round-col card">
+      <div class="card-header"><strong>Ronda {{ forloop.counter }}</strong></div>
+      <div class="card-body">
+        {% for m in round.matches %}
+        <div class="match-card">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="team pending {% if m.winner_id and m.winner_id == m.a_id %}winner{% endif %}">
+              <span>{{ m.a_nombre|default:"TBD" }}</span>
+            </div>
+            <span class="vs">vs</span>
+            <div class="team pending {% if m.winner_id and m.winner_id == m.b_id %}winner{% endif %}">
+              <span>{{ m.b_nombre|default:"BYE" }}</span>
+            </div>
+          </div>
+          {% if m.is_bye %}
+            <span class="badge badge-bye mt-2">Pasa por BYE</span>
+          {% else %}
+            <form method="post" class="mt-2 d-flex align-items-center gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="round_index" value="{{ forloop.parentloop.counter0 }}" />
+              <input type="hidden" name="match_index" value="{{ forloop.counter0 }}" />
+              <select name="winner_id" class="form-select form-select-sm" style="width:auto;">
+                <option value="">Seleccionar ganador</option>
+                <option value="{{ m.a_id }}" {% if m.winner_id == m.a_id %}selected{% endif %}>{{ m.a_nombre }}</option>
+                <option value="{{ m.b_id }}" {% if m.winner_id == m.b_id %}selected{% endif %}>{{ m.b_nombre }}</option>
+              </select>
+              <button class="btn btn-success btn-sm">Guardar</button>
+            </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+

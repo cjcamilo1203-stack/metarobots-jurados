@@ -29,11 +29,11 @@ MetaRobots{% endblock %} {% block content %}
     </div>
   </div>
 
-  <!-- Fútbol -->
+  <!-- Fútbol (Torneos Integrados) -->
   <div class="col-md-4 col-sm-6">
     <div
       class="card category-card h-100 text-center"
-      style="opacity: 0.6; cursor: not-allowed"
+      onclick="location.href='{% url 'jurados:torneo_categoria' 'futbol' %}'"
     >
       <div class="card-body d-flex flex-column justify-content-center">
         <div class="category-icon text-secondary">
@@ -41,16 +41,16 @@ MetaRobots{% endblock %} {% block content %}
         </div>
         <h5 class="card-title">Fútbol</h5>
         <p class="card-text">Robots jugadores de fútbol</p>
-        <span class="badge bg-secondary">Próximamente</span>
+        <span class="badge bg-info">Abrir</span>
       </div>
     </div>
   </div>
 
-  <!-- Sumo RC -->
+  <!-- Sumo RC (Torneos Integrados) -->
   <div class="col-md-4 col-sm-6">
     <div
       class="card category-card h-100 text-center"
-      style="opacity: 0.6; cursor: not-allowed"
+      onclick="location.href='{% url 'jurados:torneo_categoria' 'sumo_rc' %}'"
     >
       <div class="card-body d-flex flex-column justify-content-center">
         <div class="category-icon text-secondary">
@@ -58,16 +58,16 @@ MetaRobots{% endblock %} {% block content %}
         </div>
         <h5 class="card-title">Sumo RC</h5>
         <p class="card-text">Sumo controlado por radio</p>
-        <span class="badge bg-secondary">Próximamente</span>
+        <span class="badge bg-info">Abrir</span>
       </div>
     </div>
   </div>
 
-  <!-- Sumo Autónomo -->
+  <!-- Sumo Autónomo (Torneos Integrados) -->
   <div class="col-md-4 col-sm-6">
     <div
       class="card category-card h-100 text-center"
-      style="opacity: 0.6; cursor: not-allowed"
+      onclick="location.href='{% url 'jurados:torneo_categoria' 'sumo_autonomo' %}'"
     >
       <div class="card-body d-flex flex-column justify-content-center">
         <div class="category-icon text-secondary">
@@ -75,16 +75,16 @@ MetaRobots{% endblock %} {% block content %}
         </div>
         <h5 class="card-title">Sumo Autónomo</h5>
         <p class="card-text">Sumo completamente autónomo</p>
-        <span class="badge bg-secondary">Próximamente</span>
+        <span class="badge bg-info">Abrir</span>
       </div>
     </div>
   </div>
 
-  <!-- Barcos -->
+  <!-- Barcos (Torneos Integrados) -->
   <div class="col-md-4 col-sm-6">
     <div
       class="card category-card h-100 text-center"
-      style="opacity: 0.6; cursor: not-allowed"
+      onclick="location.href='{% url 'jurados:torneo_categoria' 'barcos' %}'"
     >
       <div class="card-body d-flex flex-column justify-content-center">
         <div class="category-icon text-secondary">
@@ -92,7 +92,7 @@ MetaRobots{% endblock %} {% block content %}
         </div>
         <h5 class="card-title">Barcos</h5>
         <p class="card-text">Competencia acuática</p>
-        <span class="badge bg-secondary">Próximamente</span>
+        <span class="badge bg-info">Abrir</span>
       </div>
     </div>
   </div>
@@ -119,9 +119,7 @@ MetaRobots{% endblock %} {% block content %}
   <div class="col-12">
     <div class="alert alert-info">
       <i class="bi bi-info-circle"></i>
-      <strong>Información:</strong> Actualmente solo están disponibles las
-      categorías <strong>Rally</strong> y <strong>Velocista</strong>. Las demás
-      categorías estarán disponibles próximamente.
+      <strong>Información:</strong> Las categorías <strong>Sumo RC</strong>, <strong>Sumo Autónomo</strong>, <strong>Barcos</strong> y <strong>Fútbol</strong> se gestionan en la app de torneos integrada.
     </div>
   </div>
 </div>

@@ -26,7 +26,9 @@ urlpatterns = [
 
 # Servir archivos estáticos en desarrollo
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    from django.conf import settings
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'jurados' / 'static')
 
 # URL para la página de prueba de archivos estáticos
 from django.views.generic import TemplateView

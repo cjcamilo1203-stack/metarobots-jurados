@@ -1,0 +1,55 @@
+{% extends 'jurados/base.html' %}
+{% block title %}Rally - Llaves iniciales{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-diagram-3"></i> Rally - Llaves iniciales</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'jurados:tiempos_rally' %}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  {% for t in triads %}
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Triada {{ forloop.counter }}</strong>
+        {% if t.winner %}<span class="badge bg-success">Ganador: {{ t.winner.nombre }}</span>{% else %}<span class="badge bg-warning text-dark">Pendiente</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'jurados:rally_triada_winner' torneo.id t.id 0 %}" class="">
+          {% csrf_token %}
+          <div class="list-group mb-2">
+            <label class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ t.a.nombre }}</span>
+              <input type="radio" name="winner_id" value="{{ t.a.id }}" class="form-check-input" {% if t.winner and t.winner.id == t.a.id %}checked{% endif %}>
+            </label>
+            <label class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ t.b.nombre }}</span>
+              <input type="radio" name="winner_id" value="{{ t.b.id }}" class="form-check-input" {% if t.winner and t.winner.id == t.b.id %}checked{% endif %}>
+            </label>
+            {% if t.c %}
+            <label class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ t.c.nombre }}</span>
+              <input type="radio" name="winner_id" value="{{ t.c.id }}" class="form-check-input" {% if t.winner and t.winner.id == t.c.id %}checked{% endif %}>
+            </label>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm">Guardar</button>
+            {% if t.winner %}
+            <button type="submit" name="winner_id" value="{{ t.winner.id }}" class="btn btn-outline-secondary btn-sm">Modificar selección</button>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+      <div class="card-footer text-muted">
+        Pasa solo 1 por triada; al completar todas se generarán las semifinales automáticamente.
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,284 @@
+{% extends 'jurados/base.html' %}
+{% block title %}Dashboard - MetaRobots{% endblock %}
+{% block content %}
+<style>
+  .dashboard-container { height: 75vh; }
+  /* Rotación sin atenuar: sin transiciones visuales */
+  .category-tabs .btn { font-size: 1.1rem; }
+  .panel { display: none; height: 100%; }
+  .panel.active { display: block; }
+  .scroll-x { overflow-x: auto; white-space: nowrap; }
+  .card-inline { display: inline-block; width: 420px; vertical-align: top; margin-right: 16px; }
+  .big-title { font-size: 2rem; font-weight: bold; }
+  /* TV bracket styles */
+  .tv-bg { background: radial-gradient(ellipse at top left, #0d6efd22, transparent 40%), radial-gradient(ellipse at bottom right, #20c99722, transparent 40%); border-radius: 12px; }
+  .tv-bracket { display:flex; gap:18px; padding:16px; align-items:flex-start; min-height: 55vh; }
+  .tv-col { min-width: 320px; }
+  .tv-stage { background:#072d4a; color:#eaf4ff; font-weight:600; border-radius:8px; padding:6px 10px; text-transform:uppercase; letter-spacing:.5px; display:inline-flex; align-items:center; gap:.5rem; box-shadow: inset 0 -2px 0 rgba(255,255,255,.05); }
+  .tv-card { background:#0b2236; color:#eaf4ff; border-radius:12px; padding:12px 14px; margin:12px 0; box-shadow:0 10px 22px rgba(0,0,0,.28); }
+  .tv-match { border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:8px; margin:10px 0; background:#0f1520; }
+  .tv-team { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:8px 10px; border-radius:8px; }
+  .tv-team + .tv-team { margin-top:6px; }
+  .tv-team.win { background:#0f5132; color:#d1e7dd; }
+  .tv-team.pending { background:#14283c; color:#cfe2ff; }
+  .seed { width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#20c997; color:#052c65; font-weight:700; font-size:.75rem; }
+  /* Ocultar círculo de semilla en dashboard */
+  .tv-team .seed { display: none; }
+  .name { flex:1; margin-left:.5rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+  .tv-final { min-width: 360px; }
+</style>
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+  <div class="big-title"><i class="bi bi-speedometer2"></i> Dashboard</div>
+  <div class="category-tabs btn-group" role="group">
+    <button class="btn btn-outline-primary" data-target="panel-futbol">Fútbol</button>
+    <button class="btn btn-outline-primary" data-target="panel-sumo">Sumo RC</button>
+    <button class="btn btn-outline-primary" data-target="panel-velocista">Velocista</button>
+  </div>
+  <div class="text-muted"><small>Rotación automática tras 30s sin actividad, con 30s de pausa entre categorías (sin atenuar)</small></div>
+  </div>
+
+<div class="dashboard-container">
+  <!-- Fútbol -->
+  <div id="panel-futbol" class="panel active">
+    {% if futbol %}
+    <div class="tv-bg scroll-x">
+      <div class="tv-bracket">
+        {% for r in futbol.rounds %}
+        <div class="tv-col {% if forloop.revcounter == 1 %}tv-final{% endif %}">
+          <div class="tv-stage">
+            {% if forloop.revcounter == 1 %}<i class="bi bi-trophy-fill"></i> Final
+            {% elif forloop.revcounter == 2 %}<i class="bi bi-diagram-3"></i> Semifinal
+            {% elif forloop.counter == 2 %}<i class="bi bi-diagram-2"></i> Fase III
+            {% else %}<i class="bi bi-diagram-2"></i> Fase II{% endif %}
+          </div>
+          <div class="tv-card">
+            {% for m in r.matches.all %}
+              <div class="tv-match">
+                <div class="tv-team {% if m.winner and m.a and m.winner.id == m.a.id %}win{% else %}pending{% endif %}">
+                  <span class="seed">{{ m.a.id|default:"" }}</span>
+                  <span class="name">{{ m.a.nombre|default:"TBD" }}</span>
+                </div>
+                <div class="tv-team {% if m.winner and m.b and m.winner.id == m.b.id %}win{% else %}pending{% endif %}">
+                  <span class="seed">{{ m.b.id|default:"" }}</span>
+                  <span class="name">{{ m.b.nombre|default:"TBD" }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="tv-col" style="min-width:260px">
+          <div class="tv-stage"><i class="bi bi-award-fill"></i> Campeón</div>
+          <div class="tv-card d-flex align-items-center justify-content-center" style="height:140px;">
+              {% if futbol_last_round and futbol_last_round.matches.first.winner %}
+                <div class="text-center">
+                  <div class="display-6"><i class="bi bi-trophy-fill text-warning"></i></div>
+                  <div class="fw-bold">{{ futbol_last_round.matches.first.winner.nombre }}</div>
+                </div>
+              {% else %}
+                <span class="text-muted">Aún sin definir</span>
+              {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Fase de Grupos - Tabla</h5>
+        <small class="text-muted">Ordenado por PTS, DG, GF</small>
+      </div>
+      <div class="row g-3">
+        {% for g in futbol.grupos %}
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <strong>Grupo {{ g.codigo }}</strong>
+              <span class="badge bg-secondary">{{ g.teams.count }} equipos</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%">Equipo</th>
+                      <th>PJ</th>
+                      <th>G</th>
+                      <th>E</th>
+                      <th>P</th>
+                      <th>GF</th>
+                      <th>GC</th>
+                      <th>DG</th>
+                      <th>PTS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for t in g.teams.all %}
+                    <tr>
+                      <td class="fw-semibold">{{ t.participant.nombre }}</td>
+                      <td>{{ t.pj }}</td>
+                      <td>{{ t.g }}</td>
+                      <td>{{ t.e }}</td>
+                      <td>{{ t.p }}</td>
+                      <td>{{ t.gf }}</td>
+                      <td>{{ t.gc }}</td>
+                      <td>{{ t.dg }}</td>
+                      <td><span class="badge bg-primary">{{ t.pts }}</span></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No hay torneo activo de Fútbol.</div>
+    {% endif %}
+  </div>
+
+  <!-- Sumo RC -->
+  <div id="panel-sumo" class="panel">
+    {% if sumo_rounds %}
+    <div class="tv-bg scroll-x">
+      <div class="tv-bracket">
+        {% for r in sumo_rounds %}
+        <div class="tv-col {% if forloop.revcounter == 1 %}tv-final{% endif %}">
+          <div class="tv-stage">
+            {% if forloop.revcounter == 1 %}<i class="bi bi-trophy-fill"></i> Final
+            {% elif forloop.revcounter == 2 %}<i class="bi bi-diagram-3"></i> Semifinal
+            {% elif forloop.counter == 2 %}<i class="bi bi-diagram-2"></i> Cuartos
+            {% else %}<i class="bi bi-diagram-2"></i> Ronda{% endif %}
+          </div>
+          <div class="tv-card">
+            {% for m in r.matches.all %}
+              <div class="tv-match">
+                <div class="tv-team {% if m.winner and m.a and m.winner.id == m.a.id %}win{% else %}pending{% endif %}">
+                  <span class="seed">{{ m.a.id|default:"" }}</span>
+                  <span class="name">{{ m.a.nombre|default:"TBD" }}</span>
+                </div>
+                <div class="tv-team {% if m.winner and m.b and m.winner.id == m.b.id %}win{% else %}pending{% endif %}">
+                  <span class="seed">{{ m.b.id|default:"" }}</span>
+                  <span class="name">{{ m.b.nombre|default:"TBD" }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="tv-col" style="min-width:260px">
+          <div class="tv-stage"><i class="bi bi-award-fill"></i> Campeón</div>
+          <div class="tv-card d-flex align-items-center justify-content-center" style="height:140px;">
+              {% if sumo_last_round and sumo_last_round.matches.first.winner %}
+                <div class="text-center">
+                  <div class="display-6"><i class="bi bi-trophy-fill text-warning"></i></div>
+                  <div class="fw-bold">{{ sumo_last_round.matches.first.winner.nombre }}</div>
+                </div>
+              {% else %}
+                <span class="text-muted">Aún sin definir</span>
+              {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+      <div class="alert alert-info">No hay torneo activo de Sumo RC.</div>
+    {% endif %}
+  </div>
+
+  <!-- Velocista -->
+  <div id="panel-velocista" class="panel">
+    <div class="scroll-x">
+      <div class="card card-inline">
+        <div class="card-header"><strong>Ranking de Tiempos</strong></div>
+        <div class="card-body">
+          {% if velocista_ranking %}
+          <div class="table-responsive">
+            <table class="table table-dark table-striped">
+              <thead>
+                <tr><th>#</th><th>Robot</th><th>Mejor Tiempo</th><th>Autor</th></tr>
+              </thead>
+              <tbody>
+                {% for r in velocista_ranking %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ r.nombre }}</td>
+                  <td><strong>{{ r.mejor_tiempo }}s</strong></td>
+                  <td>{{ r.autor_principal }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info">Sin tiempos registrados.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const buttons = document.querySelectorAll('.category-tabs .btn');
+    const panels = document.querySelectorAll('.panel');
+    let active = 0;
+    let lastActivity = Date.now();
+    let rotateInterval = null; // loop de rotación
+    let firstTimeout = null;   // primer cambio
+    let monitorTimer = null;   // vigila inactividad
+    const INACTIVITY_MS = 30000;  // 30s
+    const DISPLAY_MS = 30000;     // 30s por categoría
+    const GAP_MS = 30000;         // 30s de pausa entre categorías
+
+    function show(idx){
+      panels.forEach((p,i)=>p.classList.toggle('active', i===idx));
+      buttons.forEach((b,i)=>{
+        b.classList.toggle('btn-primary', i===idx);
+        b.classList.toggle('btn-outline-primary', i!==idx);
+      });
+      active = idx;
+    }
+    buttons.forEach((btn,i)=>{
+      btn.addEventListener('click', ()=>{ show(i); lastActivity=Date.now(); stopAutoRotate(); });
+    });
+
+    function onActivity(){ lastActivity = Date.now(); stopAutoRotate(); }
+    ['click','scroll','mousemove','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,onActivity,{passive:true}));
+
+    function stopAutoRotate(){
+      if (rotateInterval){ clearInterval(rotateInterval); rotateInterval=null; }
+      if (firstTimeout){ clearTimeout(firstTimeout); firstTimeout=null; }
+    }
+
+    function rotateOnce(){
+      // Espera el GAP y cambia instantáneo (sin fade)
+      setTimeout(()=>{
+        show((active+1)%panels.length);
+      }, GAP_MS);
+    }
+
+    // Vigilar inactividad y arrancar auto-rotación
+    function startMonitor(){
+      if (monitorTimer) clearInterval(monitorTimer);
+      monitorTimer = setInterval(()=>{
+        if (!rotateInterval && (Date.now() - lastActivity > INACTIVITY_MS)){
+          // Primera rotación: 30s de visualización + 30s de pausa
+          firstTimeout = setTimeout(()=>{ show((active+1)%panels.length); }, DISPLAY_MS + GAP_MS);
+          // Siguientes cada 30s de visualización + 30s de pausa
+          rotateInterval = setInterval(rotateOnce, DISPLAY_MS + GAP_MS);
+        }
+      }, 1000);
+    }
+
+    show(active);
+    startMonitor();
+  })();
+  </script>
+{% endblock %}
+
+

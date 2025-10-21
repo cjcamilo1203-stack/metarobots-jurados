@@ -118,12 +118,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # En desarrollo, Django sirve archivos estáticos automáticamente
 # Para producción, configura STATIC_ROOT y STATICFILES_DIRS
 STATICFILES_DIRS = [
-    # Aquí puedes agregar directorios adicionales si es necesario
+    BASE_DIR / 'jurados' / 'static',
 ]
 
 # Necesario para servir archivos estáticos desde cualquier host

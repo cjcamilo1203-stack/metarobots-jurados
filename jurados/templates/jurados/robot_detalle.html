@@ -206,14 +206,13 @@ MetaRobots{% endblock %} {% block content %}
         <div class="modal-body">
           <input type="hidden" id="tiempoId" name="tiempo_id" />
           <div class="mb-3">
-            <label for="tiempo" class="form-label">Tiempo (segundos) *</label>
+            <label for="tiempo" class="form-label">Tiempo *</label>
             <input
-              type="number"
+              type="text"
               class="form-control"
               id="tiempo"
               name="tiempo"
-              step="0.00001"
-              min="0"
+              placeholder="Ej: 75.321 o 1:15.321"
               required
             />
           </div>

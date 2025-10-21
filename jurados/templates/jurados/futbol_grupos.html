@@ -1,0 +1,97 @@
+{% extends 'jurados/base.html' %}
+{% block title %}{{ torneo.nombre }} - Fútbol RC{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-dribbble"></i> {{ torneo.nombre }} - Fase de Grupos</h1>
+    <form method="post" action="{% url 'jurados:torneo_reiniciar' torneo.categoria %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <input type="password" name="pin" class="form-control form-control-sm d-inline-block me-2" placeholder="PIN (0000)" style="width:120px" required>
+      <button class="btn btn-outline-danger">
+        <i class="bi bi-arrow-repeat"></i> Reiniciar torneo
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% for grupo in grupos %}
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <strong>Grupo {{ grupo.codigo }}</strong>
+      </div>
+      <div class="card-body">
+        <h6>Tabla</h6>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-striped">
+            <thead>
+              <tr>
+                <th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>PTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in grupo.teams.all %}
+                <tr>
+                  <td>{{ t.participant.nombre }}</td>
+                  <td>{{ t.pj }}</td>
+                  <td>{{ t.g }}</td>
+                  <td>{{ t.e }}</td>
+                  <td>{{ t.p }}</td>
+                  <td>{{ t.gf }}</td>
+                  <td>{{ t.gc }}</td>
+                  <td>{{ t.dg }}</td>
+                  <td>{{ t.pts }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <h6>Partidos</h6>
+        {% for m in grupo.matches.all %}
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+              {{ m.home.participant.nombre }} vs {{ m.away.participant.nombre }}
+            </div>
+            <div>
+              {% if not m.played %}
+              <form method="post" action="{% url 'jurados:futbol_registrar_resultado' torneo.id m.id %}" class="d-flex">
+                {% csrf_token %}
+                <input name="goals_home" type="number" class="form-control form-control-sm me-2" style="width: 70px;" placeholder="GH" min="0"/>
+                <input name="goals_away" type="number" class="form-control form-control-sm me-2" style="width: 70px;" placeholder="GA" min="0"/>
+                <button class="btn btn-primary btn-sm">Guardar</button>
+              </form>
+              {% else %}
+                <span class="badge bg-success">{{ m.goals_home }} - {{ m.goals_away }}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if has_rounds %}
+<div class="row mt-3">
+  <div class="col-12 text-end">
+    <a class="btn btn-primary" href="{% url 'jurados:torneo_detalle' torneo.id %}">
+      <i class="bi bi-braces"></i> Ver llaves
+    </a>
+  </div>
+</div>
+{% endif %}
+{% if not has_rounds %}
+<div class="row mt-3">
+  <div class="col-12 text-end">
+    <a class="btn btn-outline-primary" href="{% url 'jurados:torneo_ver_llaves' torneo.id %}">
+      <i class="bi bi-braces"></i> Ver llaves
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+
